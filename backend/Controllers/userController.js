@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Donor, Hospital,Organization } from'../Models/User.js';
 import generateToken from "../Utils/generateToken.js";
-
+                                                            
 
 const registerUser=async(req ,res)=>{
   try{
@@ -83,7 +83,7 @@ const loginUser=async(req,res)=>{
 const token = generateToken(user);
 res.cookie("token", token, {
       httpOnly: true,
-      secure: false, //true in  https as it is secure
+      secure: false,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000 
     });

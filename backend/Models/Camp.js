@@ -97,4 +97,4 @@ const campSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Camp = mongoose.model("Camp", campSchema);
+export const  Camp = mongoose.model("Camp", campSchema);

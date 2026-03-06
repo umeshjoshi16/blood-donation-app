@@ -46,7 +46,7 @@ const PAGE_TITLES = {
   '/dashboard-hospital/donor-list':        'Donors List',
 };
 
-// ── Root layout component
+
 export default function DashboardHospital() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { pathname } = useLocation();

@@ -7,8 +7,8 @@ dotenv.config();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin:'http://localhost:5005',//react app
-  credentials:true              //allow cookies
+  origin:true,
+  credentials:true              
 }));
 import CONNECT_DB from './Models/db.js';
 import userRoutes from'./Routes/userRoutes.js';

@@ -7,7 +7,7 @@ const router = express.Router();
 
 const getDataController = async (req, res) => {
   try {
-    const user = req.user; // comes from authMiddleware
+    const user = req.user; 
     let userData;
 
     if (user.role === "donor") {

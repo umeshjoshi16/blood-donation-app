@@ -1,4 +1,4 @@
-import { Camp } from '../Models/Camp.js';
+import {Camp } from '../Models/Camp.js';
 
 export const scheduleCamp = async (req, res) => {
   try {

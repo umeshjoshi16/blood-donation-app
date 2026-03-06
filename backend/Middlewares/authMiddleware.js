@@ -29,4 +29,4 @@ export default async function authMiddleware(req, res, next) {
   } catch (err) {
     res.status(401).json({ message: "Invalid token" });
   }
-}
+}                                                                                                                                                                                                                                   
