@@ -12,7 +12,7 @@ app.use(cors({
 }));
 import CONNECT_DB from './Models/db.js';
 import userRoutes from'./Routes/userRoutes.js';
-import locationRoutes from'./Routes/locationRoutes.js';
+
 const PORT=process.env.PORT||8000;
 
 //connecting database
@@ -20,7 +20,7 @@ CONNECT_DB();
 
 //routes
 app.use('/',userRoutes);
-app.use('/',locationRoutes)
+
 
 app.get('/',(req,res)=>{
   res.send('Blood Donation App API is running!')

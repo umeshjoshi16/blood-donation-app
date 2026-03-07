@@ -108,6 +108,20 @@ const schema = yup.object().shape({
   city: yup.string().required("City is required"),
   district: yup.string().required("District is required"),
   province: yup.string().required("Province is required"),
+ weight: yup
+  .number()
+  .typeError("Weight must be a number")
+  .required("Weight is required")
+  .min(45, "Minimum weight should be 45kg to donate blood"),
+  lastDonated: yup
+  .date()
+  .nullable()
+  .max(new Date(), "Invalid date"),
+  previousDonor: yup.boolean(),
+  recentFever: yup.boolean(),
+  recentTattoo: yup.boolean(),
+  alcoholLast24h: yup.boolean(),
+  
   consent: yup.boolean().oneOf([true], "You must give consent"),
 });
 
@@ -137,28 +151,41 @@ export default function RegisterCamp({ campId, donorProfile, onClose }) {
 
    const watchProvince = watch('province');
   const watchDistrict = watch('district');
+  const previousDonor = watch("previousDonor");
+
   const onSubmit = async (data) => {
+     if (!donorProfile?._id) {
+      toast.error("Donor profile not loaded. Cannot register.");
+      return;
+    }
     try {
+       console.log('registered data',data);
       await axios.post(
-        "http://localhost:8000/dashboard-donor/register",
+        "http://localhost:8000/dashboard-donor/register-camp",
         {
           ...data,
-          donorId: donorProfile._id,
+        donorId: donorProfile?._id,
           campId,
+           lastDonated: data.lastDonated || null,
+           previousDonor: !!data.previousDonor,
+    recentFever: !!data.recentFever,
+    recentTattoo: !!data.recentTattoo,
+    alcoholLast24h: !!data.alcoholLast24h,
         },
         { withCredentials: true }
       );
-      toast.success("Successfully registered for the camp!");
+       toast.success(res.data.message || "Successfully registered for the camp!");
+
       onClose();
       console.log(data);
     } catch (err) {
       console.error(err);
-      toast.error("Registration failed. Try again.");
+      const errorMessage =err?.response?.data?.message || "Registration failed. Try again.";
+    toast.error(errorMessage);
     }
   };
-
   return (
-    <div className="fixed md:absolute   top-16 inset-0 w-full  flex items-center justify-center z-50">
+    <div className="fixed md:absolute   top-120 inset-0 w-full  flex items-center justify-center z-50">
       <Toaster />
       <div className=" rounded-xl shadow-xl p-6 w-full md:w-200 bg-red-50 border border-red-500 relative">
         <div className="w-full ">
@@ -171,6 +198,8 @@ export default function RegisterCamp({ campId, donorProfile, onClose }) {
           ✕
         </button>
         <h2 className="text-2xl font-bold mb-4 text-red-600">Register for Camp</h2>
+
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Name */}
           <div>
@@ -297,10 +326,71 @@ export default function RegisterCamp({ campId, donorProfile, onClose }) {
           </select>
           <p className="text-red-500 text-xs mt-1">{errors.city?.message}</p>
         </div>
+
+         <div>
+           
+
+            
+            <label className="block text-sm font-medium text-gray-700 mb-1">Weight</label>
+            <input
+              {...register("weight")}
+              className="w-full border border-red-600 focus:border-red-600 focus:border-2 outline-red-500 p-2 rounded"
+            />
+            {errors.weight && <p className="text-red-500 text-sm">{errors.weight.message}</p>}
+          </div>
+
+          
+      
+<div className="flex items-center gap-2">
+  <input type="checkbox" {...register("previousDonor")} id="previousDonor" />
+  <label htmlFor="previousDonor" className=" text-blue-600">Have you donated blood previously?</label>
+</div>
+
+
+{previousDonor && (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">Last Donated Time</label>
+    <input
+      type="date"
+      {...register("lastDonated")}
+      className="w-full border border-red-600 focus:border-red-600 focus:border-2 outline-red-500 p-2 rounded"
+    />
+    {errors.lastDonated && (
+      <p className="text-red-500 text-sm">{errors.lastDonated.message}</p>
+    )}
+  </div>
+)}
+
+
+{/* Recent Fever */}
+<div className="flex items-center gap-2">
+  <input type="checkbox" {...register("recentFever")} />
+  <span className="text-blue-600">Have you had a fever in the last 7 days?</span>
+</div>
+
+{/* Recent Tattoo */}
+<div className="flex items-center gap-2">
+  <input type="checkbox" {...register("recentTattoo")} />
+  <span className="text-blue-600">Have you gotten a tattoo in the last 6 months?</span>
+</div>
+
+{/* Alcohol in Last 24 Hours */}
+<div className="flex items-center gap-2">
+  <input type="checkbox" {...register("alcoholLast24h")} />
+  <span className="text-blue-600">Have you consumed alcohol in the last 24 hours?</span>
+</div>
+
+
+
+
+
+
+
+
           {/* Consent */}
           <div className="flex items-center gap-2">
             <input type="checkbox" {...register("consent")} />
-            <span>I consent to donate blood and allow storing my data for this camp.</span>
+            <span className="font-medium text-black">I consent to donate blood and allow storing my data for this camp.</span>
           </div>
           {errors.consent && <p className="text-red-500 text-sm">{errors.consent.message}</p>}
 

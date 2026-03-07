@@ -1,10 +1,12 @@
-import React from 'react';
-import { PlusCircle } from 'lucide-react';
+import React,{useState} from 'react';
+import { PlusCircle,Calendar} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import MyCamps from './MyCamps';
 
 const campSchema = yup.object({
   campTitle: yup.string().required('Camp title is required'),
@@ -122,6 +124,8 @@ const nepalData = {
 
 
 export default function OrganizeCampForm() {
+  const navigate=useNavigate();
+   const [showMyCamps, setShowMyCamps] = useState(false);
   const {
     register,
     handleSubmit,
@@ -154,7 +158,31 @@ export default function OrganizeCampForm() {
   };
 
   return (
+    <>
+    
+  <div className="p-4">
+    
+      <div className="flex items-center justify-center mb-4">
+        <button
+          className="flex items-center gap-2 border rounded-xl px-3 border-gray-300 bg-red-100 hover:bg-red-300 p-1 font-bold text-xl cursor-pointer"
+          onClick={() => setShowMyCamps(true)} 
+        >
+          <Calendar size={16} />
+          My Camps
+        </button>
+      </div>
+
+     
+    
+        {showMyCamps ? (
+          <MyCamps />
+        ) : ''}
+      </div>
+   
+
+
     <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-200">
+     
       <div className="flex items-center gap-3 mb-6">
         <PlusCircle className="text-blue-600" />
         <h2 className="text-xl font-bold">Organize Donation Camp</h2>
@@ -353,5 +381,6 @@ export default function OrganizeCampForm() {
         </button>
       </form>
     </div>
+    </>
   );
 }

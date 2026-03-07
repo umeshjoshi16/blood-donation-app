@@ -38,15 +38,15 @@ function MapComponent() {
         mapRef.current.setCenter([longitude, latitude]);
 
         // Send live location to backend
-        try {
-          await axios.get(
-            "http://localhost:8000/location",
-            { latitude, longitude },
-            { withCredentials: true }
-          );
-        } catch (err) {
-          console.error("Error sending location:", err);
-        }
+        // try {
+        //   await axios.get(
+        //     "http://localhost:8000/location",
+        //     { latitude, longitude },
+        //     { withCredentials: true }
+        //   );
+        // } catch (err) {
+        //   console.error("Error sending location:", err);
+        // }
       },
       (err) => console.error(err),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }

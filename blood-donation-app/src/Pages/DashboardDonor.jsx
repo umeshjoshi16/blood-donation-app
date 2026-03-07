@@ -22,6 +22,7 @@ export default function DashboardDonor() {
     const [location, setLocation] = useState(null);
     
     const [selectedCamp, setSelectedCamp] = useState(null); 
+    const [donorProfile, setDonorProfile] = useState(null);
     const [showRegisterForm, setShowRegisterForm] = useState(false);
   const navigate = useNavigate();
 useEffect(() => {
@@ -35,6 +36,9 @@ useEffect(() => {
       console.log("Camps:", camps);
 console.log("Length:", camps.length);
       setCamps(res.data.data || []);
+      if (res.data.donorProfile) {
+        setDonorProfile(res.data.donorProfile);
+      }
       
     } catch (error) {
       console.error(error);
@@ -126,9 +130,7 @@ const statusConfig = {
               </h2>
               <p className="text-gray-500 mt-1">Register for a camp near you and save lives.</p>
             </div>
-            <button className="text-red-600 font-bold hover:underline flex items-center gap-1">
-              View All Camps <ChevronRight size={18}/>
-            </button>
+            
           </div>
 
           {/* Camps Grid */}
@@ -167,12 +169,15 @@ const statusConfig = {
                   </button>
               
 
-                  <button className="w-fit  px-5 bg-red-50 text-red-600 py-2.5 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-colors cursor-pointer" onClick={()=>{
-                    setShowRegisterForm(true);
-                    // navigate("/dashboard-donor/register-form");
-                  }}>
-                    Register Now
-                  </button>
+                  <button
+  className="w-fit px-5 bg-red-50 text-red-600 py-2.5 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+  onClick={() => {
+    setSelectedCamp(camp);    
+    setShowRegisterForm(true); 
+  }}
+>
+  Register Now
+</button>
                   </div>
                 </div>
               </div>
@@ -220,7 +225,7 @@ const statusConfig = {
             <h3 className="font-bold text-red-600">Donor Registration</h3>
           </div>
           <p className="text-sm font-medium mt-1">
-            Total Seats: {selectedCamp.expectedDonors} | Registered: {selectedCamp.registeredCount}
+            Total Seats: {selectedCamp.expectedDonors} | Registered: {selectedCamp.registeredCount} | Available: {selectedCamp.expectedDonors-selectedCamp.registeredCount}
           </p>
         </div>
 
@@ -323,11 +328,12 @@ const statusConfig = {
         </section>
       </main>
 
-      {showRegisterForm && (
+   {showRegisterForm && donorProfile && selectedCamp && (
   <RegisterCamp 
-    camp={selectedCamp} 
+    campId={selectedCamp._id} 
+    donorProfile={donorProfile} 
     onClose={() => setShowRegisterForm(false)} 
-   />
+  />
 )}
 
 

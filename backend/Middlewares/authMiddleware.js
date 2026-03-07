@@ -24,6 +24,8 @@ export default async function authMiddleware(req, res, next) {
     }
 
     req.user = user; 
+     req.userId = decoded.id;
+    req.role = decoded.role;
     next();
 
   } catch (err) {
