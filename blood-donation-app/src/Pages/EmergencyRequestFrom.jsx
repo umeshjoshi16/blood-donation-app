@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const requestSchema = yup.object({
   patientName: yup.string().required('Patient name is required'),
@@ -19,7 +20,7 @@ const requestSchema = yup.object({
   reason: yup.string().required('Reason is required'),
 });
 
-export default function RequestBloodForm() {
+export default function RequestBloodForm({hospitalProfile,}) {
   const {
     register,
     handleSubmit,
@@ -28,7 +29,10 @@ export default function RequestBloodForm() {
   } = useForm({ resolver: yupResolver(requestSchema) });
 
   const onSubmit = async (data) => {
-    await new Promise((r) => setTimeout(r, 800));
+    
+    const res=await axios.post('http://localhost:8000/dashboard-hospital/emergency-request',
+    data,
+    { withCredentials:true });
     console.log(data);
     toast.success('Emergency request submitted!');
     reset();
@@ -43,7 +47,7 @@ export default function RequestBloodForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
 
-        {/* Patient Name & Blood Type */}
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
@@ -78,7 +82,7 @@ export default function RequestBloodForm() {
           </div>
         </div>
 
-        {/* Units */}
+      
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Units Required</label>
           <input
@@ -95,7 +99,7 @@ export default function RequestBloodForm() {
           )}
         </div>
 
-        {/* Reason */}
+        
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Request</label>
           <textarea

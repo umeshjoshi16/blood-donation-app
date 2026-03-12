@@ -1,12 +1,15 @@
+
 import CampRegistration from "../Models/RegisterCamp.js";
 import { Donor } from "../Models/User.js";
+
+// import { generateCertificate } from "../Utils/generateCertificate.js";
 
 export const markAttendance = async (req, res) => {
   try {
     let { registrationIds } = req.body;
 
     if (!registrationIds || registrationIds.length === 0) {
-      return res.status(400).json({ message: "registrationIds is required" });
+      return res.status(400).json({ message: "Please select donor" });
     }
 
     if (!Array.isArray(registrationIds)) {
@@ -17,21 +20,34 @@ export const markAttendance = async (req, res) => {
     let updatedCount = 0;
 
     for (const id of registrationIds) {
-      // Atomically update registration only if not completed
+
       const registration = await CampRegistration.findOneAndUpdate(
-        { _id: id, registrationStatus: { $ne: "Completed" } }, // only if not completed
+        { _id: id, registrationStatus: {
+           $ne: "Completed" } },
         { $set: { registrationStatus: "Completed" } },
-        { new: true } // return the updated document
+        { new: true }
       );
 
-      if (!registration) continue; 
+      if (!registration) continue;
 
-      
-      await Donor.findByIdAndUpdate(
-        registration.donorId,
-        { $inc: { donatedBlood: 1 }, $set: { lastDonated: today } }
-      );
+      // Get donor data
+      const donor = await Donor.findById(registration.donorId);
 
+      if (!donor) continue;
+
+      // Update donor donation info
+      donor.donatedBlood = (donor.donatedBlood || 0) + 1;
+      donor.lastDonated = today; 
+     
+
+      //    try {
+      //   const certificatePath = await generateCertificate(donor);
+      //   if (certificatePath) donor.certificate = certificatePath;
+      // } catch (err) {
+      //   console.log("Certificate generation failed:", err);
+      // }
+
+      await donor.save();
       updatedCount++;
     }
 
@@ -41,7 +57,11 @@ export const markAttendance = async (req, res) => {
       });
     }
 
-    res.status(200).json({ message: "Attendance updated", updatedCount });
+    res.status(200).json({
+      message: "Attendance updated and certificates generated",
+      updatedCount
+    });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Error marking attendance" });

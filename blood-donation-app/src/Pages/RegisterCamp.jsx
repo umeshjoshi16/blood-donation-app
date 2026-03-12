@@ -160,7 +160,7 @@ export default function RegisterCamp({ campId, donorProfile, onClose }) {
     }
     try {
        console.log('registered data',data);
-      await axios.post(
+       const res=await axios.post(
         "http://localhost:8000/dashboard-donor/register-camp",
         {
           ...data,

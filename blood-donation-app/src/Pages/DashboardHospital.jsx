@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
-import { NavLink, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { useState,useEffect } from 'react';
+import { NavLink, Routes, Route, Navigate, useLocation, useNavigate ,} from 'react-router-dom';
 import {
   AlertCircle, Calendar, Droplets, LayoutDashboard,
-  Menu, Users, X, Activity,
+  Menu, Users, X, Activity,Building2, Mail, Phone, MapPin, User,
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
+
+import axios from "axios";
 
 
 import RequestBloodForm from './EmergencyRequestFrom';
@@ -31,7 +33,7 @@ const emergencyRequests = [
   { id: '#PT-8823', bloodType: 'B+', urgency: 'Normal',    patient: 'Arun Patel',   units: 3 },
 ];
 
-// ── Nav items
+
 const NAV_ITEMS = [
   { icon: <LayoutDashboard size={20} />, label: 'Dashboard',         to: '/dashboard-hospital' },
   { icon: <AlertCircle size={20} />,     label: 'Emergency Request', to: '/dashboard-hospital/emergency-request' },
@@ -50,19 +52,41 @@ const PAGE_TITLES = {
 export default function DashboardHospital() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { pathname } = useLocation();
-
+  const [hospital, setHospital] = useState(null);
+const [showModal, setShowModal] = useState(false);
+const navigate=useNavigate();
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+useEffect(() => {
+  const fetchHospitalOnLoad = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/profile", {
+        withCredentials: true,
+      });
+      setHospital(res.data);
+    } catch (err) {
+      console.error("Error fetching hospital on load:", err);
+    }
+  };
+  fetchHospitalOnLoad();
+}, []);
+
+const handleLogOut = async () => {
+    await axios.post("http://localhost:8000/logout", {}, { withCredentials: true });
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/", { replace: true });
+  };
 
   return (
     <div className="flex h-screen bg-gray-50  overflow-hidden">
       <Toaster position="top-right" />
 
-      {/* Mobile overlay */}
+      
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={toggleSidebar} />
       )}
 
-      {/* ── Sidebar ── */}
+     
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col
         transition-transform duration-300 transform
@@ -84,7 +108,7 @@ export default function DashboardHospital() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/dashboard-hospital'}  // prevents Dashboard staying active on sub-routes
+              end={to === '/dashboard-hospital'}  
               onClick={() => setIsSidebarOpen(false)}
               className={({ isActive }) =>
                 `w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium ${
@@ -100,17 +124,105 @@ export default function DashboardHospital() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-              <Activity size={16} className="text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-800">City Hospital</p>
-              <p className="text-xs text-gray-400">Admin</p>
-            </div>
+        {/* Button */}
+<button 
+  onClick={() => setShowModal(true)}
+  className="p-4 border-t border-gray-200 w-full cursor-pointer hover:bg-gray-100 transition"
+>
+  <div className="flex items-center gap-3 px-2">
+    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+      <Activity size={16} className="text-red-600" />
+    </div>
+    <div>
+      <p className="text-sm font-semibold text-gray-800">
+        {hospital?.hospitalName || "............."}
+      </p>
+      <p className="text-xs text-gray-400">Admin</p>
+    </div>
+  </div>
+</button>
+
+{/* Modal */}
+{showModal && hospital && (
+  <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+    <div className="bg-white rounded-2xl w-[90%] max-w-md p-5 shadow-xl">
+
+      {/* Modal Header */}
+      <div className="flex justify-between items-center border-b pb-3 mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <Building2 size={22} className="text-blue-600" />
+          </div>
+          <div>
+            <h2 className="font-bold text-lg">{hospital.hospitalName}</h2>
+            <span className="text-xs text-blue-500 font-semibold">
+              Reg: {hospital.registrationNumber}
+            </span>
           </div>
         </div>
+        <button
+          onClick={() => setShowModal(false)}
+          className="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Details */}
+      <div className="flex flex-col gap-3 text-sm">
+
+        <div className="flex items-start gap-2">
+          <Mail size={16} className="text-gray-500 mt-0.5" />
+          <div>
+            <p className="text-xs text-gray-400 font-semibold uppercase">Email</p>
+            <p className="text-gray-700 font-medium">{hospital.email}</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <Phone size={16} className="text-gray-500 mt-0.5" />
+          <div>
+            <p className="text-xs text-gray-400 font-semibold uppercase">Phone</p>
+            <p className="text-gray-700 font-medium">{hospital.phoneNumber}</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <MapPin size={16} className="text-gray-500 mt-0.5" />
+          <div>
+            <p className="text-xs text-gray-400 font-semibold uppercase">Address</p>
+            <p className="text-gray-700 font-medium">
+              {hospital.streetAddress}, {hospital.city}, {hospital.district}, {hospital.province}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <User size={16} className="text-gray-500 mt-0.5" />
+          <div>
+            <p className="text-xs text-gray-400 font-semibold uppercase">Contact Person</p>
+            <p className="text-gray-700 font-medium">{hospital.contactPersonName}</p>
+            <p className="text-gray-500">{hospital.contactPersonNumber}</p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Footer */}
+      <div className="mt-5 pt-3 border-t flex justify-end gap-3">
+        <button
+          onClick={() => setShowModal(false)}
+          className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-xl font-bold text-sm cursor-pointer"
+        >
+          Close
+        </button>
+        <button className='bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl font-bold text-sm cursor-pointer' onClick={handleLogOut}>Logout</button>
+
+      </div>
+
+    </div>
+  </div>
+)}
       </aside>
 
       {/* ── Main ── */}

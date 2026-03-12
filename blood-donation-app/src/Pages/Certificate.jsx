@@ -1,131 +1,231 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import axios from 'axios';
+import toast, { Toaster } from "react-hot-toast";
 
-export default function Certificate() {
-  
-  const [certificateData, setCertificateData] = useState({
-    name: "",
-    date: "",
-    location: "",
-    medicalOfficer:"",
-    authorized:""
-  });
+export default function Certificate({ donor, camp }) {
+  const certRef = useRef(null);
+  const [preview, setPreview] = useState(null);
+  const [saved, setSaved] = useState(false);
+
+  const certificateData = {
+    name: donor.userName,
+    date: camp?.date ? new Date(camp.date).toLocaleDateString() : "",
+    location: `${camp?.streetAddress}, ${camp?.city}`,
+    hospitalName: camp?.hospitalName,
+    coordinatorName: camp?.coordinatorName,
+    medicalOfficer: "DR.Kailash Singh",
+  };
+
+  const handleCapture = async () => {
+    try {
+      const canvas = await html2canvas(certRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      canvas.toBlob((blob) => {
+        const previewUrl = URL.createObjectURL(blob);
+        setPreview({ blob, url: previewUrl, filename: `certificate_${donor._id}.png` });
+      }, "image/png");
+
+    } catch (err) {
+      console.error("Capture failed:", err);
+      toast.error("Failed to capture: " + err.message);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!preview) return;
+    try {
+      const formData = new FormData();
+      formData.append("certificate", preview.blob, preview.filename);
+      formData.append("donorId", donor._id);
+
+      await axios.post("http://localhost:8000/donor/upload-certificate", formData, {
+        withCredentials: true,
+      });
+
+      setSaved(true);
+      toast.success("Certificate saved to your profile!");
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Failed to save certificate");
+    }
+  };
+
+  const handleDownload = () => {
+    if (!preview) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const a = document.createElement("a");
+      a.href = reader.result;
+      a.download = preview.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+    reader.readAsDataURL(preview.blob);
+  };
 
   return (
-    <div className=' p-4 flex flex-col items-center justify-center  bg-gray-100'>
-      <div>
-        <button className='  p-2  cursor-pointer hover:bg-sky-50 ubuntu-regular rounded-lg bg-white shadow'>Download Pdf</button>
-      </div>
+    
+    <div style={{ padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", backgroundColor: "#f3f4f6" }}>
+   <Toaster />
+     
+      {!preview && (
+        <button
+          onClick={handleCapture}
+          className="mb-4 bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 font-bold cursor-pointer"
+        >
+          Generate Certificate
+        </button>
+      )}
 
-   
-    <div className="flex justify-center items-center p-8 bg-gray-100 h-auto font-sans">
-      {/* Main Certificate Container */}
-      <div className="relative w-250 bg-white shadow-2xl overflow-hidden border-8 border-white">
-        
-        {/* Background Wave Pattern */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none" 
-             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='20' viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21.184 20c.35.298.831.446 1.284.446 1.39 0 2.518-1.128 2.518-2.518 0-.539-.194-1.033-.512-1.416C23.146 15.01 21.5 12.14 21.5 9c0-3.14 1.646-6.01 2.972-7.512.318-.383.512-.877.512-1.416 0-1.39-1.128-2.518-2.518-2.518-.453 0-.934.148-1.284.446C19.854 1.21 18.5 4.93 18.5 9c0 4.07 1.354 7.79 2.684 11z' fill='%239C92AC' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E")` }}>
+      {/* Step 2 — Filename + Preview + Buttons */}
+      {preview && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginBottom: "16px", width: "100%" }}>
+          <div style={{ fontSize: "14px", color: "#4b5563", fontWeight: "500", backgroundColor: "#e5e7eb", padding: "8px 16px", borderRadius: "8px" }}>
+            📄 {preview.filename}
+          </div>
+          <img
+            src={preview.url}
+            alt="Certificate Preview"
+            style={{ width: "100%", maxWidth: "700px", borderRadius: "12px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #d1d5db" }}
+          />
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+            <button
+              onClick={handleDownload}
+              className="bg-green-600 text-white px-6 py-2 rounded-xl hover:bg-green-700 font-bold cursor-pointer"
+            >
+              ⬇ Download to Device
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saved}
+              className={`px-6 py-2 rounded-xl font-bold cursor-pointer text-white ${saved ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
+            >
+              {saved ? "✅ Saved to Profile" : "Save to Profile"}
+            </button>
+            <button
+              onClick={() => { setPreview(null); setSaved(false); }}
+              className="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-gray-600 font-bold cursor-pointer"
+            >
+              ✕ Retake
+            </button>
+          </div>
         </div>
+      )}
 
-        {/* --- Decorative Side Elements --- */}
-        <div className="absolute -top-20 -left-20 w-80 h-80 bg-red-700 rotate-45 z-10 border-r-8 border-white"></div>
-        
-        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-yellow-400 rounded-3xl rotate-12 z-10 shadow-lg border-8 border-white">
-            <div className="flex items-center justify-center h-full -rotate-12">
-                 <div className="bg-red-700 p-4 rounded-xl">
-                    <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                 </div>
-            </div>
-        </div>
+    
+      <div
+        ref={certRef}
+        style={{ backgroundColor: "#f3f4f6", padding: "32px", display: "flex", justifyContent: "center", alignItems: "center", fontFamily: "sans-serif" }}
+      >
+        <div style={{ position: "relative", width: "900px", backgroundColor: "#ffffff", boxShadow: "0 25px 50px rgba(0,0,0,0.25)", overflow: "hidden", border: "8px solid #ffffff" }}>
 
-        <div className="absolute top-6 right-6 flex flex-col items-center bg-red-700 text-white p-2 rounded-b-lg shadow-md z-20">
-            <div className="border border-white p-1 rounded-sm mb-1">
-                <svg className="w-6 h-6" fill="white" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
-            </div>
-            <span className="text-[8px] font-bold text-center  left-100 leading-tight">BLOOD CARE<br/>BLOOD  CENTER</span>
-        </div>
-
-        {/* --- Main Content --- */}
-        <div className="relative z-20 flex flex-col items-center pt-7 px-20 text-center">
           
-          <h1 className="text-4xl font-black text-black tracking-tighter uppercase mb-1 px-30 z-1">
-            Blood Care Blood  Donation Center
-          </h1>
-          <p className="text-xs font-bold text-gray-700 mb-1">
-            Koteshwor,Kathmandu Nepal
-          </p>
-          <div className="text-sm font-bold text-gray-800">
-            Mobile: <span className="text-black">984800000, 9777776876</span>
-          </div>
-          <p className="text-sm font-bold text-gray-800 mb-8">
-            Email: <span className="text-black">bloodcarecenter@gmail.com</span>
-          </p>
+          <div style={{ position: "absolute", top: "-80px", left: "-80px", width: "320px", height: "320px", backgroundColor: "#b91c1c", transform: "rotate(45deg)", zIndex: 10, borderRight: "8px solid #ffffff" }}></div>
 
-          <h2 className="text-6xl font-normal mb-8 text-black" style={{ fontFamily: "'UnifrakturMaguntia', serif" }}>
-            Certificate of Excellence
-          </h2>
-
-          <div className="w-full text-lg space-y-6 text-gray-800 italic">
-            <p>This is to certify that</p>
-            
-            {/* 2. Access state data: name */}
-            <div className="border-b-2 border-dotted border-gray-400 w-3/4 mx-auto pb-1 mt-4">
-              <span className="text-2xl font-bold not-italic font-serif text-gray-900 uppercase">
-                {certificateData.name}
-              </span>
-            </div>
-
-            <p>for the noble gesture of rendering humanitarian service by donating</p>
-            
-            {/* 3. Access state data: date and location */}
-            <div className="flex justify-center items-baseline gap-2">
-              <span>a unit of blood on</span>
-              <span className="border-b-2 border-dotted border-gray-400 min-w-37.5 font-bold not-italic px-2">
-                {certificateData.date}
-              </span>
-              <span>at</span>
-              <span className="border-b-2 border-dotted border-gray-400 min-w-50 font-bold not-italic px-2">
-                {certificateData.location}
-              </span>
+          
+          <div style={{ position: "absolute", bottom: "-40px", left: "-40px", width: "192px", height: "192px", backgroundColor: "#facc15", borderRadius: "24px", transform: "rotate(12deg)", zIndex: 10, border: "8px solid #ffffff" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", transform: "rotate(-12deg)" }}>
+              <div style={{ backgroundColor: "#b91c1c", padding: "16px", borderRadius: "12px" }}>
+                <svg style={{ width: "48px", height: "48px" }} fill="white" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </div>
             </div>
           </div>
 
-          <div className="w-full mt-5 flex flex-col items-center">
-            <p className="text-3xl text-gray-700 mb-9" style={{ fontFamily: "'Dancing Script', cursive" }}>
-              Blood Care Deeply Appreciates
+         
+          <div style={{ position: "absolute", top: "24px", right: "24px", display: "flex", flexDirection: "column", alignItems: "center", backgroundColor: "#b91c1c", color: "#ffffff", padding: "8px", borderRadius: "0 0 8px 8px", zIndex: 20 }}>
+            <span style={{ fontSize: "8px", fontWeight: "bold", textAlign: "center", lineHeight: 1.2 }}>BLOOD CARE</span>
+          </div>
+
+          
+          <div style={{ position: "absolute", top: "25%", left: "-48px", width: "128px", height: "128px", border: "10px solid #b91c1c", borderRadius: "50%", opacity: 0.2 }}></div>
+
+          
+          <div style={{ position: "relative", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "28px", paddingLeft: "80px", paddingRight: "80px", textAlign: "center" }}>
+
+            <h1 style={{ fontSize: "36px", fontWeight: "900", color: "#000000", letterSpacing: "-0.05em", textTransform: "uppercase", marginBottom: "4px" }}>
+              Blood Care
+            </h1>
+            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#374151", marginBottom: "4px" }}>
+              Koteshwor, Kathmandu
+            </p>
+            <p style={{ fontSize: "14px", fontWeight: "bold", color: "#1f2937", margin: "0" }}>
+              Mobile: <span style={{ color: "#000000" }}>984800000, 9777776876</span>
+            </p>
+            <p style={{ fontSize: "14px", fontWeight: "bold", color: "#1f2937", marginBottom: "32px" }}>
+              Email: <span style={{ color: "#000000" }}>bloodcare@gmail.com</span>
             </p>
 
-            <div className="w-full flex justify-between px-10 items-end">
-                <div className="flex flex-col items-center">
-                    <div className="w-48  pt-1">
-                       <div className="border-b-2 border-dotted border-gray-400 w-3/4 mx-auto pb-1 mt-4">
-              <span className="text-2xl font-bold not-italic font-serif text-gray-900 uppercase">
-                {certificateData.medicalOfficer}
-              </span>
+            <h2 style={{ fontSize: "56px", fontWeight: "normal", color: "#000000", marginBottom: "32px", fontFamily: "'UnifrakturMaguntia', serif" }}>
+              Certificate of Excellence
+            </h2>
+
+            <div style={{ width: "100%", fontSize: "18px", color: "#1f2937", fontStyle: "italic" }}>
+              <p style={{ margin: "0 0 16px 0" }}>This is to certify that</p>
+
+              <div style={{ borderBottom: "2px dotted #9ca3af", width: "75%", margin: "0 auto 4px", paddingBottom: "4px" }}>
+                <span style={{ fontSize: "24px", fontWeight: "bold", fontStyle: "normal", fontFamily: "serif", color: "#111827", textTransform: "uppercase" }}>
+                  {certificateData.name}
+                </span>
+              </div>
+
+              <p style={{ margin: "16px 0" }}>for the noble gesture of rendering humanitarian service by donating</p>
+
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+                <span>a unit of blood on</span>
+                <span style={{ borderBottom: "2px dotted #9ca3af", fontWeight: "bold", fontStyle: "normal", padding: "0 8px" }}>
+                  {certificateData.date}
+                </span>
+                <span>at</span>
+                <span style={{ borderBottom: "2px dotted #9ca3af", fontWeight: "bold", fontStyle: "normal", padding: "0 8px" }}>
+                  {certificateData.location}
+                </span>
+                <span>organized by</span>
+                <span style={{ borderBottom: "2px dotted #9ca3af", fontWeight: "bold", fontStyle: "normal", padding: "0 8px" }}>
+                  {certificateData.hospitalName}
+                </span>
+              </div>
             </div>
-                      
-                        <p className="text-sm ubuntu-regular font-bolc">Medical Officer</p>
-                    </div>
+
+            <div style={{ width: "100%", marginTop: "20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <p style={{ fontSize: "30px", color: "#374151", marginBottom: "36px", fontFamily: "'Dancing Script', cursive" }}>
+                Blood Care Deeply Appreciates
+              </p>
+
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between", padding: "0 40px 32px", alignItems: "flex-end" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ borderBottom: "2px dotted #9ca3af", paddingBottom: "4px", marginTop: "16px", minWidth: "150px", textAlign: "center" }}>
+                    <span style={{ fontSize: "20px", fontWeight: "bold", fontFamily: "serif", color: "#111827", textTransform: "uppercase" }}>
+                      {certificateData.coordinatorName}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "14px", fontWeight: "bold", color: "#000000", margin: "4px 0 0 0" }}>Camp Coordinator</p>
                 </div>
 
-                <div className="flex flex-col items-center">
-                    <div className="w-48   pt-1">
-                      <div className="border-b-2 border-dotted border-gray-400 w-3/4 mx-auto pb-1 mt-4">
-              <span className="text-2xl font-bold not-italic font-serif text-gray-900 uppercase">
-                {certificateData.medicalOfficer}
-              </span>
-            </div>
-                      
-                        <p className="text-sm  ubuntu-regular font-bold">Authorized Signature</p>
-                    </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ borderBottom: "2px dotted #9ca3af", paddingBottom: "4px", marginTop: "16px", minWidth: "150px", textAlign: "center" }}>
+                    <span style={{ fontSize: "20px", fontWeight: "bold", fontFamily: "serif", color: "#111827", textTransform: "uppercase" }}>
+                      {certificateData.medicalOfficer}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "14px", fontWeight: "bold", color: "#000000", margin: "4px 0 0 0" }}>Authorized Signature</p>
                 </div>
+              </div>
             </div>
           </div>
+
         </div>
-
-        <div className="absolute top-1/4 -left-12 w-32 h-32 border-10 border-red-700 rounded-full opacity-20"></div>
       </div>
-    </div>
 
-     </div>
+    </div>
   );
 }

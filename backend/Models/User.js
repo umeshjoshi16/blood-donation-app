@@ -57,6 +57,11 @@ const donorSchema = new mongoose.Schema(
 
     donatedBlood: { type: Number, default: 0 },
     
+    certificate: {
+  type: String,
+   default: "",
+},
+    
   },
   { timestamps: true }
 );
@@ -172,7 +177,7 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    streetAddress: {        // ← added
+    streetAddress: {        
       type: String,
       required: true,
     },
