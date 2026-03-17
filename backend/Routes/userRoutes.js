@@ -45,7 +45,16 @@ import {getMyCamps} from '../Controllers/myCamps.js';
 import { getCampDonors } from "../Controllers/getCampDonors.js";
 import { markAttendance } from "../Controllers/markAttendance.js";
 import { uploadCertificate, getLastCamp,getDonationHistory } from "../Controllers/certificateController.js"; 
-import { emergencyRequest} from '../Controllers/emergencyCampController.js';
+import { emergencyRequest,getEmergencyRequest,submitDonationResponse} from '../Controllers/emergencyCampController.js';
+import { getActiveDonors } from "../Controllers/getEligibleDonor.js";
+import {
+  getCamps,
+  getCampRegistrations,
+  getDonationResponses,
+  getDonors,
+  getHospitals,
+  getOrganizations,
+} from "../Controllers/dashboardController.js";
 import multer from "multer";
 import fs from "fs";
 
@@ -65,7 +74,13 @@ const upload = multer({ storage });
 const router=express.Router();
 
 router.post("/register", registerUser); 
-router.post("/login", loginUser);       
+router.post("/login", loginUser); 
+router.get("/camps",             authMiddleware, getCamps);
+router.get("/campregistrations", authMiddleware, getCampRegistrations);
+router.get("/donationresponses", authMiddleware, getDonationResponses);
+router.get("/donors",            authMiddleware, getDonors);
+router.get("/hospitals",         authMiddleware, getHospitals);
+router.get("/organizations",     authMiddleware, getOrganizations);      
 router.get('/profile', authMiddleware, getDataController);
 router.get("/dashboard-donor", authMiddleware, getDonorDashboard);
 router.post("/dashboard-donor/register-camp", registerForCamp);
@@ -75,12 +90,14 @@ router.get('/dashboard-hospital/donor-list', getCamp);
 router.post("/dashboard-hospital/blood-camp/camp-donors", authMiddleware, getCampDonors);
 router.post("/dashboard-hospital/blood-camp/mark-attendance", authMiddleware, markAttendance);
 router.post("/dashboard-hospital/emergency-request",authMiddleware,emergencyRequest)
+router.get("/active-donors", authMiddleware, getActiveDonors);
 
 // New certificate routes
 router.get("/donor/last-camp", authMiddleware, getLastCamp);
 router.post("/donor/upload-certificate", authMiddleware, upload.single("certificate"), uploadCertificate);
 router.get("/donor/donation-history", authMiddleware, getDonationHistory);
-
+router.get("/emergency-requests", getEmergencyRequest);
+router.post("/donation-response", authMiddleware, submitDonationResponse);
 
 
 

@@ -50,3 +50,6 @@ hospitalId: {
 );
 
 export default mongoose.model("EmergencyRequest",emergencySchema);
+
+
+
