@@ -75,6 +75,11 @@ const campSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    hospitalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      required: true,
+    },
     hospitalProvince: {
       type: String,
       required: true,

@@ -45,7 +45,7 @@ import {getMyCamps} from '../Controllers/myCamps.js';
 import { getCampDonors } from "../Controllers/getCampDonors.js";
 import { markAttendance } from "../Controllers/markAttendance.js";
 import { uploadCertificate, getLastCamp,getDonationHistory } from "../Controllers/certificateController.js"; 
-import { emergencyRequest,getEmergencyRequest,submitDonationResponse} from '../Controllers/emergencyCampController.js';
+import { fulfillEmergencyRequest, emergencyRequest,getEmergencyRequest,submitDonationResponse} from '../Controllers/emergencyCampController.js';
 import { getActiveDonors } from "../Controllers/getEligibleDonor.js";
 import {
   getCamps,
@@ -99,7 +99,11 @@ router.get("/donor/donation-history", authMiddleware, getDonationHistory);
 router.get("/emergency-requests", getEmergencyRequest);
 router.post("/donation-response", authMiddleware, submitDonationResponse);
 
-
+router.put(
+  "/emergency-requests/:id/fulfill",
+  authMiddleware,
+  fulfillEmergencyRequest
+);
 
 
 export default router;

@@ -39,25 +39,45 @@ export const emergencyRequest=async(req,res)=>{
 
   }
 }
+// emergencyController.js
+export const fulfillEmergencyRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const updated = await EmergencyRequest.findOneAndUpdate(
+      { _id: id, hospitalId: req.user._id }, // ← only this hospital can fulfill its own request
+      { status: 'Fulfilled' },
+      { new: true }
+    );
 
+    if (!updated) {
+      return res.status(404).json({ message: "Request not found or unauthorized" });
+    }
 
-export const getEmergencyRequest=async(req,res)=>{
-    const { city } = req.query; 
-
-  try{
-     const emergency= city
-     ? await EmergencyRequest.find({  hospitalCity: city  })
-     : await EmergencyRequest.find();
-     res.status(200).json({ data: emergency});
-
-  }
-  catch(error){
+    res.status(200).json({ message: "Request fulfilled", data: updated });
+  } catch (error) {
     res.status(500).json({ message: error.message });
-
   }
-}
+};
 
+export const getEmergencyRequest = async (req, res) => {
+  const { city } = req.query;
+
+  try {
+    const query = { status: "Pending" }; // ← only show pending to donors
+
+    if (city) {
+      // ✅ case-insensitive match — "kathmandu" matches "Kathmandu"
+      query.hospitalCity = { $regex: new RegExp(`^${city}$`, 'i') };
+    }
+
+    const emergency = await EmergencyRequest.find(query).sort({ createdAt: -1 });
+    res.status(200).json({ data: emergency });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
 

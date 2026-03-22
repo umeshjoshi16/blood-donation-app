@@ -537,9 +537,7 @@ import axios                             from 'axios';
 import RegisterCamp                      from './RegisterCamp';
 import DonateFormModal                   from './DonateFormModel';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 const API = 'http://localhost:8000';
 
@@ -560,9 +558,7 @@ const CAMP_STATUS = {
   Completed: { dot: 'bg-gray-300',   badge: 'bg-gray-100   text-gray-500',   label: 'Completed' },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LOCALSTORAGE HELPERS  (per-donor keys — survive logout)
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 const lsGet = (key, fallback) => {
   try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; }
@@ -576,9 +572,7 @@ const notifKey     = id => `bc_notifs_${id}`;
 const respondedKey = id => `bc_responded_${id}`;
 const seenKey      = id => `bc_seen_${id}`;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PURE HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 const isCompatible = (donorBlood, neededBlood) =>
   BLOOD_COMPATIBILITY[donorBlood]?.includes(neededBlood) ?? false;
@@ -603,14 +597,12 @@ function getCampStatus(camp) {
   return 'Completed';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 export default function DashboardDonor() {
   const navigate = useNavigate();
 
-  // ── State ──────────────────────────────────────────────────────────────────
+
   const [camps,            setCamps]            = useState([]);
   const [emergencyList,    setEmergencyList]    = useState([]);   // all fetched emergency requests
   const [donorProfile,     setDonorProfile]     = useState(null);
@@ -624,28 +616,54 @@ export default function DashboardDonor() {
 
   const seenIdsRef = useRef(new Set());
 
-  // ── 1. Init — fetch profile + camps, load localStorage ───────────────────
-  useEffect(() => {
-    (async () => {
-      try {
-        const res     = await axios.get(`${API}/dashboard-donor`, { withCredentials: true });
-        const profile = res.data.donorProfile;
-        setCamps(res.data.data || []);
 
-        if (profile) {
-          setDonorProfile(profile);
-          setNotifications(lsGet(notifKey(profile._id),         []));
-          setRespondedIds(new Set(lsGet(respondedKey(profile._id), [])));
-          seenIdsRef.current = new Set(lsGet(seenKey(profile._id), []));
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error('Failed to load dashboard');
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const res     = await axios.get(`${API}/dashboard-donor`, { withCredentials: true });
+  //       const profile = res.data.donorProfile;
+  //       setCamps(res.data.data || []);
+
+  //       if (profile) {
+  //         setDonorProfile(profile);
+  //         setNotifications(lsGet(notifKey(profile._id),         []));
+  //         setRespondedIds(new Set(lsGet(respondedKey(profile._id), [])));
+  //         seenIdsRef.current = new Set(lsGet(seenKey(profile._id), []));
+  //       }
+  //     } catch (err) {
+  //       console.error(err);
+  //       toast.error('Failed to load dashboard');
+  //     }
+  //   })();
+  // }, []);
+// useEffect 1 — fix this part only
+useEffect(() => {
+  (async () => {
+    try {
+      const res     = await axios.get(`${API}/dashboard-donor`, { withCredentials: true });
+      const profile = res.data.donorProfile;
+      setCamps(res.data.data || []);
+
+      if (profile) {
+        setDonorProfile(profile);
+
+        // ── Load from localStorage ──
+        const savedNotifs = lsGet(notifKey(profile._id), []);
+
+        // ✅ Mark ALL previously saved notifications as read on login
+        // Only NEW ones (from polling) should ever be unread
+        const notisAsRead = savedNotifs.map(n => ({ ...n, read: true }));
+
+        setNotifications(notisAsRead);
+        setRespondedIds(new Set(lsGet(respondedKey(profile._id), [])));
+        seenIdsRef.current = new Set(lsGet(seenKey(profile._id), []));
       }
-    })();
-  }, []);
-
-  // ── 2. Fetch emergency requests (for the Emergency tab cards) ────────────
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load dashboard');
+    }
+  })();
+}, []);
   useEffect(() => {
     if (!donorProfile) return;
     (async () => {
@@ -670,14 +688,14 @@ export default function DashboardDonor() {
     })();
   }, [donorProfile]);
 
-  // ── 3. Poll emergency requests for notifications (every 15s) ─────────────
+  
   useEffect(() => {
     if (!donorProfile) return;
 
     const poll = async () => {
       try {
         const res      = await axios.get(`${API}/emergency-requests`, {
-          params: { city: donorProfile.city },
+            params: donorProfile.city ? { city: donorProfile.city } : {}, 
           withCredentials: true,
         });
         const requests = Array.isArray(res.data)
@@ -703,33 +721,19 @@ export default function DashboardDonor() {
             read:         false,
           });
         });
-
-        if (toAdd.length > 0) {
-          setNotifications(prev => {
-            const updated = [...toAdd, ...prev];
-            lsSet(notifKey(donorProfile._id), updated);
-            lsSet(seenKey(donorProfile._id),  [...seenIdsRef.current]);
-            return updated;
-          });
-          // Also update the emergency list
-          setEmergencyList(prev => {
-            const existingIds = new Set(prev.map(e => e._id ?? e.id));
-            const newOnes = toAdd
-              .filter(n => !existingIds.has(n.id))
-              .map(n => ({
-                _id:          n.id,
-                hospitalName: n.hospitalName,
-                hospitalCity: n.hospitalCity,
-                patientName:  n.patientName,
-                bloodType:    n.bloodType,
-                units:        n.units,
-                reason:       n.reason,
-                createdAt:    n.createdAt,
-                status:       'Pending',
-              }));
-            return [...newOnes, ...prev];
-          });
-        }
+// In the polling useEffect — update the lsSet call
+if (toAdd.length > 0) {
+  setNotifications(prev => {
+    const updated = [...toAdd, ...prev];
+    
+    // ✅ Save to localStorage with new ones unread, but
+    // persist the read state correctly for next session
+    lsSet(notifKey(donorProfile._id), updated);
+    lsSet(seenKey(donorProfile._id),  [...seenIdsRef.current]);
+    return updated;
+  });
+  // ... rest of emergencyList update unchanged
+}
       } catch (err) {
         console.error('Polling error:', err);
       }
@@ -740,7 +744,7 @@ export default function DashboardDonor() {
     return () => clearInterval(id);
   }, [donorProfile]);
 
-  // ── Notification actions ──────────────────────────────────────────────────
+
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -792,7 +796,7 @@ export default function DashboardDonor() {
     });
   };
 
-  // ── Derived values ────────────────────────────────────────────────────────
+
 
   const totalDonations = donorProfile?.donatedBlood ?? 0;
   const lastDonated    = donorProfile?.lastDonated;
@@ -803,12 +807,12 @@ export default function DashboardDonor() {
   const daysUntilNext = !isEligible && daysSinceLast !== null ? 90 - daysSinceLast : 0;
   const upcomingCamps = camps.filter(c => getCampStatus(c) !== 'Completed');
 
-  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* ══════════════════════════════ NAVBAR ══════════════════════════════ */}
+    
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-5 py-3 flex items-center gap-3">
 
@@ -856,7 +860,6 @@ export default function DashboardDonor() {
         </div>
       </nav>
 
-      {/* ══════════════════════════ NOTIFICATION DROPDOWN ═══════════════════ */}
       {notifOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
@@ -942,7 +945,7 @@ export default function DashboardDonor() {
         </>
       )}
 
-      {/* ══════════════════════════ PAGE BODY ═══════════════════════════════ */}
+     
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-7">
 
         {/* ── Stat Cards ── */}
@@ -1011,7 +1014,7 @@ export default function DashboardDonor() {
           ))}
         </div>
 
-        {/* ═══════════════════════════ CAMPS TAB ══════════════════════════ */}
+       
         {activeTab === 'camps' && (
           <section className="space-y-5">
             <div className="flex items-center justify-between">
@@ -1103,7 +1106,7 @@ export default function DashboardDonor() {
           </section>
         )}
 
-        {/* ═══════════════════════ EMERGENCY TAB ══════════════════════════ */}
+       
         {activeTab === 'emergency' && (
           <section className="space-y-5">
             <div className="flex items-center justify-between">
@@ -1195,7 +1198,7 @@ export default function DashboardDonor() {
           </section>
         )}
 
-        {/* ═══════════════════════ ACTIVITY TAB ═══════════════════════════ */}
+       
         {activeTab === 'activity' && (
           <section className="space-y-5">
             <h2 className="text-lg font-bold text-gray-800">My Donation Activity</h2>

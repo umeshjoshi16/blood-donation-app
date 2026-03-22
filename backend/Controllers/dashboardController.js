@@ -4,41 +4,71 @@ import DonationResponse from "../Models/emergencyDonationModel.js";
 import EmergencyRequest from "../Models/emergencyModel.js"; 
 import { Donor, Hospital, Organization } from "../Models/User.js"; 
 
+// ✅ filtered by logged-in hospital
 export const getCamps = async (req, res) => {
   try {
-    const camps = await Camp.find().sort({ createdAt: -1 }).lean();
+    const camps = await Camp.find({ hospitalId: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(camps);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+// ✅ filtered by camps belonging to logged-in hospital
 export const getCampRegistrations = async (req, res) => {
   try {
-    const regs = await CampRegistration.find()
+    const hospitalCamps = await Camp.find({ hospitalId: req.user._id })
+      .select("_id")
+      .lean();
+    const campIds = hospitalCamps.map(c => c._id);
+
+    const regs = await CampRegistration.find({ campId: { $in: campIds } })
       .populate("donorId", "userName email phoneNumber bloodGroup city")
       .populate("campId",  "campTitle date city status")
       .sort({ createdAt: -1 })
       .lean();
+
     res.json(regs);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+// ✅ filtered by emergency requests belonging to logged-in hospital
 export const getDonationResponses = async (req, res) => {
   try {
-    const responses = await DonationResponse.find()
-      .populate("donorId",           "userName email phoneNumber bloodGroup city")
-      .populate("emergencyRequestId","patientName bloodType units status hospitalName")
+    const hospitalRequests = await EmergencyRequest.find({ hospitalId: req.user._id })
+      .select("_id")
+      .lean();
+    const requestIds = hospitalRequests.map(r => r._id);
+
+    const responses = await DonationResponse.find({ emergencyRequestId: { $in: requestIds } })
+      .populate("donorId",            "userName email phoneNumber bloodGroup city")
+      .populate("emergencyRequestId", "patientName bloodType units status hospitalName")
       .sort({ createdAt: -1 })
       .lean();
+
     res.json(responses);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+// ✅ filtered by logged-in hospital
+export const getEmergencyRequests = async (req, res) => {
+  try {
+    const requests = await EmergencyRequest.find({ hospitalId: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ all donors — shared across platform
 export const getDonors = async (req, res) => {
   try {
     const donors = await Donor.find()
@@ -51,6 +81,7 @@ export const getDonors = async (req, res) => {
   }
 };
 
+// ✅ all hospitals — shared across platform
 export const getHospitals = async (req, res) => {
   try {
     const hospitals = await Hospital.find()
@@ -63,6 +94,7 @@ export const getHospitals = async (req, res) => {
   }
 };
 
+// ✅ all organizations — shared across platform
 export const getOrganizations = async (req, res) => {
   try {
     const orgs = await Organization.find()

@@ -485,6 +485,7 @@ import DonorsListView   from './DonorsList';
 
 
 const API = 'http://localhost:8000';
+const ML_API = 'http://localhost:5001';
 
 const NAV_ITEMS = [
   { icon: <LayoutDashboard size={20} />, label: 'Dashboard',         to: '/dashboard-hospital' },
@@ -613,7 +614,7 @@ export default function DashboardHospital() {
     navigate('/', { replace: true });
   };
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  
   if (loading) return (
     <div className="flex h-screen items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center gap-3 text-gray-500">
@@ -623,7 +624,7 @@ export default function DashboardHospital() {
     </div>
   );
 
-  // ── Error ──────────────────────────────────────────────────────────────────
+ 
   if (error) return (
     <div className="flex h-screen items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center gap-3 text-center">
@@ -803,10 +804,7 @@ export default function DashboardHospital() {
               >
                 <RefreshCw size={16} className="text-gray-500" />
               </button>
-              <button className="bg-red-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition flex items-center gap-2">
-                <AlertCircle size={16} />
-                Emergency SOS
-              </button>
+             
             </div>
           </div>
         </header>
@@ -818,6 +816,7 @@ export default function DashboardHospital() {
               element={
                 <DashboardHome
                   camps={camps}
+                  hospital={hospital} 
                   campRegistrations={campRegistrations}
                   donationResponses={donationResponses}
                   donors={donors}
@@ -846,6 +845,7 @@ function DashboardHome({
   camps,
   campRegistrations,
   donationResponses,
+   hospital, 
   donors,
   emergencyRequests,
   hospitals,
@@ -862,7 +862,9 @@ function DashboardHome({
   }).length;
 
   // emergencySchema → status enum: "Pending" | "Fulfilled" | "Cancelled"
-  const pendingRequests = emergencyRequests.filter(r => r.status === 'Pending');
+const pendingRequests = emergencyRequests.filter(
+    r => r.status === 'Pending' && r.hospitalId?.toString() === hospital?._id?.toString()
+  );
 
   return (
     <div className="space-y-6">
@@ -872,7 +874,7 @@ function DashboardHome({
         <SummaryCard label="Total Donors"     value={donors.length}          color="blue"   icon={<Users size={20} />} />
         <SummaryCard label="Camps This Month" value={campsThisMonth}         color="green"  icon={<Calendar size={20} />} />
         <SummaryCard label="Pending Requests" value={pendingRequests.length} color="orange" icon={<AlertCircle size={20} />} />
-        <SummaryCard label="Organizations"    value={organizations.length}   color="red"    icon={<Building2 size={20} />} />
+        
       </div>
 
       {/* ── Quick Stats ── */}
@@ -889,12 +891,7 @@ function DashboardHome({
           <p className="text-3xl font-extrabold text-gray-800">{donationResponses.length}</p>
           <p className="text-xs text-gray-400 mt-1">donors who responded to requests</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <p className="text-xs text-gray-400 font-semibold uppercase mb-1">Hospitals in Network</p>
-          {/* hospitalSchema → total count */}
-          <p className="text-3xl font-extrabold text-gray-800">{hospitals.length}</p>
-          <p className="text-xs text-gray-400 mt-1">registered hospitals</p>
-        </div>
+        
       </div>
 
       {/* ── Pending Emergency Requests ── */}
@@ -1163,6 +1160,29 @@ function DetailView({ request, donationResponses, donors, onBack }) {
         }`}>
           {request.status}
         </span>
+        <button
+  onClick={async () => {
+    try {
+      await axios.put(
+        `http://localhost:8000/emergency-requests/${request._id}/fulfill`, // ← add ID
+        {},
+        { withCredentials: true }
+      );
+      toast.success("Marked as Fulfilled ✅");
+      onBack();
+    } catch (err) {
+      toast.error("Failed to update");
+    }
+  }}
+  // ← only show if still Pending
+  className={`bg-green-600 cursor-pointer hover:bg-green-700 text-white px-4 py-1 rounded-lg text-xs font-bold  ${
+    request.status !== 'Pending' ? 'hidden' : ''
+  }`}
+>
+  Got Blood 
+</button>
+        
+
       </div>
 
       {/* ── Top 3 Donors by Probability ── */}
