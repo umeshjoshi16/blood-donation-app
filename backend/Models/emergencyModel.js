@@ -45,6 +45,22 @@ hospitalId: {
     default: "Pending",
 
 },
+ respondedBy: [
+  {
+    donorId: { type: mongoose.Schema.Types.ObjectId, ref: "Donor", required: true },
+    donorName: { type: String, required: true },
+    donorEmail: { type: String, required: true },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
+      required: true,
+    },
+    unitsDonated: { type: Number, default: 1 },
+    message: { type: String, default: "" },
+    respondedAt: { type: Date, default: Date.now },
+    timesDonated: { type: Number, default: 0 } 
+  },
+],
 },
 {timestamps:true}
 );

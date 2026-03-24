@@ -179,3 +179,61 @@ export const submitDonationResponse = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const submitEmergencyDonationResponse = async (req, res) => {
+  try {
+    const {
+      emergencyRequestId,
+      donorId,
+      donorName,
+      donorEmail,
+      bloodGroup,
+      unitsDonated = 1,
+      message = ""
+    } = req.body;
+
+    if (!emergencyRequestId || !donorId) {
+      return res.status(400).json({ message: "EmergencyRequestId and donorId are required" });
+    }
+
+    const request = await EmergencyRequest.findById(emergencyRequestId);
+    if (!request) {
+      return res.status(404).json({ message: "Emergency request not found" });
+    }
+
+    // Check if donor has already responded
+    const existingResponse = request.respondedBy.find(
+      (r) => r.donorId.toString() === donorId
+    );
+
+    if (existingResponse) {
+      // Update existing response
+      existingResponse.unitsDonated += unitsDonated;
+      existingResponse.timesDonated += 1;
+      if (message) existingResponse.message = message;
+      existingResponse.respondedAt = new Date();
+    } else {
+      // Add new response
+      request.respondedBy.push({
+        donorId,
+        donorName,
+        donorEmail,
+        bloodGroup,
+        unitsDonated,
+        message,
+        timesDonated: 1,
+        respondedAt: new Date(),
+      });
+    }
+
+    await request.save();
+
+    return res.status(200).json({
+      message: "Response recorded successfully",
+      respondedBy: request.respondedBy,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

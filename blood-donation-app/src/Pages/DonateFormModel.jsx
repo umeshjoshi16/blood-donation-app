@@ -8,33 +8,64 @@ export default function DonateFormModal({ notification, donorProfile, onClose, o
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // const handleSubmit = async () => {
+  //   if (!confirmed) {
+  //     toast.error("Please confirm your willingness to donate");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     await axios.post(
+  //       "http://localhost:8000/donation-response",
+  //       {
+  //         emergencyRequestId: notification.id,
+  //         message,
+  //       },
+  //       { withCredentials: true }
+  //     );
+
+  //     toast.success("Response sent to hospital!");
+  //     onSuccess(notification.id); // mark as responded in parent
+  //     onClose();
+  //   } catch (error) {
+  //     toast.error(error.response?.data?.message || "Failed to submit");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
-    if (!confirmed) {
-      toast.error("Please confirm your willingness to donate");
-      return;
-    }
+  if (!confirmed) {
+    toast.error("Please confirm your willingness to donate");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await axios.post(
-        "http://localhost:8000/donation-response",
-        {
-          emergencyRequestId: notification.id,
-          message,
-        },
-        { withCredentials: true }
-      );
+  setLoading(true);
+  try {
+    await axios.post(
+      "http://localhost:8000/emergency-donation-response",
+      {
+        emergencyRequestId: notification.id,
+        message,
+        donorId: donorProfile._id,
+        donorName: donorProfile.userName,
+        donorEmail: donorProfile.email,
+        bloodGroup: donorProfile.bloodGroup,
+        unitsDonated: 1
+      },
+      { withCredentials: true }
+    );
 
-      toast.success("Response sent to hospital!");
-      onSuccess(notification.id); // mark as responded in parent
-      onClose();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to submit");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    toast.success("Response sent to hospital!");
+    onSuccess(notification.id); // mark as responded in parent
+    onClose();
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to submit");
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <>
       {/* Backdrop */}

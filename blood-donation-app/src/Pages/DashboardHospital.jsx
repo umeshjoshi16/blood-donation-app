@@ -502,7 +502,7 @@ const pendingRequests = emergencyRequests.filter(
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-red-300 text-xs">Responses</p>
-                          <p className="font-bold">{responseCount} donors</p>
+                          <p className="font-bold"> {req.respondedBy?.length || 0} donor{req.respondedBy?.length === 1 ? '' : 's'}</p>
                         </div>
                         <ChevronRight size={16} className="text-red-400" />
                       </div>
@@ -609,308 +609,98 @@ const pendingRequests = emergencyRequests.filter(
 
 
 
-// function DetailView({ request, donationResponses, donors, onBack }) {
-//   // donationResponseSchema → emergencyRequestId (ref to EmergencyRequest)
-//   // donationResponseSchema → donorId (ref to Donor)
-//   const responsesForRequest = donationResponses.filter(
-//     dr => dr.emergencyRequestId?.toString() === request._id?.toString()
-//   );
 
-//   // Collect donor IDs from responses to match against full donor docs
-//   const respondedDonorIds = new Set(
-//     responsesForRequest
-//       .map(dr => (dr.donorId?._id || dr.donorId)?.toString())
-//       .filter(Boolean)
-//   );
 
-//   const respondedDonors = donors.filter(d => respondedDonorIds.has(d._id?.toString()));
-
-//   // Sort by ML probability (donorSchema has no probability field by default —
-//   // this will be 0 for all donors until ML scoring is applied)
-//   const sorted = [...respondedDonors].sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
-
-//   // ML model returns 0.0–1.0 → convert to %
-//   const getPct = (d) => {
-//     const raw = d.probability ?? 0;
-//     return raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
-//   };
-
-//   const getBadgeClass = (pct) => {
-//     if (pct >= 75) return 'bg-green-100 text-green-700';
-//     if (pct >= 45) return 'bg-yellow-100 text-yellow-700';
-//     return 'bg-red-100 text-red-600';
-//   };
-
-//   return (
-//     <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-5">
-
-//       <button
-//         onClick={onBack}
-//         className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 cursor-pointer"
-//       >
-//         ← Back
-//       </button>
-
-//       {/* ── Request Details ── */}
-//       <div className="bg-red-50 border border-red-100 rounded-xl p-4 space-y-3">
-//         <div className="flex items-center gap-3">
-//           <div className="flex items-center justify-center bg-red-100 rounded-full h-12 w-12 shrink-0">
-//             {/* emergencySchema → bloodType */}
-//             <p className="font-extrabold text-red-700">{request.bloodType}</p>
-//           </div>
-//           <div>
-//             {/* emergencySchema → patientName */}
-//             <h2 className="font-bold text-gray-900 text-lg">{request.patientName}</h2>
-//             <p className="text-xs text-gray-400">
-//               Posted at {new Date(request.createdAt).toLocaleString()}
-//             </p>
-//           </div>
-//         </div>
-
-//         <div className="grid grid-cols-2 gap-3 text-sm">
-//           <div className="bg-white rounded-lg p-3 border border-red-100">
-//             <p className="text-xs text-gray-400">Units Required</p>
-//             {/* emergencySchema → units */}
-//             <p className="font-bold text-gray-800">{request.units} units</p>
-//           </div>
-//           <div className="bg-white rounded-lg p-3 border border-red-100">
-//             <p className="text-xs text-gray-400">Hospital</p>
-//             {/* emergencySchema → hospitalName */}
-//             <p className="font-bold text-gray-800">{request.hospitalName}</p>
-//           </div>
-//           <div className="bg-white rounded-lg p-3 border border-red-100">
-//             <p className="text-xs text-gray-400">City</p>
-//             {/* emergencySchema → hospitalCity */}
-//             <p className="font-bold text-gray-800">{request.hospitalCity}</p>
-//           </div>
-//           <div className="bg-white rounded-lg p-3 border border-red-100">
-//             <p className="text-xs text-gray-400">District</p>
-//             {/* emergencySchema → hospitalDistrict */}
-//             <p className="font-bold text-gray-800">{request.hospitalDistrict}</p>
-//           </div>
-//         </div>
-
-//         <div className="bg-white rounded-lg p-3 border border-red-100 text-sm">
-//           <p className="text-xs text-gray-400 mb-1">Reason</p>
-//           {/* emergencySchema → reason */}
-//           <p className="text-gray-700">{request.reason}</p>
-//         </div>
-
-//         {/* emergencySchema → status */}
-//         <span className={`inline-block text-xs font-bold px-2 py-1 rounded-full ${
-//           request.status === 'Pending'   ? 'bg-yellow-100 text-yellow-700' :
-//           request.status === 'Fulfilled' ? 'bg-green-100  text-green-700'  :
-//                                            'bg-red-100    text-red-600'
-//         }`}>
-//           {request.status}
-//         </span>
-//         <button
-//   onClick={async () => {
-//     try {
-//       await axios.put(
-//         `http://localhost:8000/emergency-requests/${request._id}/fulfill`, // ← add ID
-//         {},
-//         { withCredentials: true }
-//       );
-//       toast.success("Marked as Fulfilled ✅");
-//       onBack();
-//     } catch (err) {
-//       toast.error("Failed to update");
-//     }
-//   }}
-//   // ← only show if still Pending
-//   className={`bg-green-600 cursor-pointer hover:bg-green-700 text-white px-4 py-1 rounded-lg text-xs font-bold  ${
-//     request.status !== 'Pending' ? 'hidden' : ''
-//   }`}
-// >
-//   Got Blood 
-// </button>
-        
-
-//       </div>
-
-//       {/* ── Top 3 Donors by Probability ── */}
-//       {sorted.length > 0 && (
-//         <div>
-//           <h3 className="font-semibold text-gray-800 mb-3">
-//             Top Likely Donors
-//             <span className="ml-2 text-xs text-gray-400 font-normal">ranked by AI probability</span>
-//           </h3>
-//           <div className="space-y-2">
-//             {sorted.slice(0, 3).map((d, i) => (
-//               <div
-//                 key={d._id}
-//                 className="flex items-center justify-between bg-green-50 border border-green-100 rounded-lg px-4 py-3"
-//               >
-//                 <div className="flex items-center gap-3">
-//                   <span className="text-xs font-bold text-green-700">#{i + 1}</span>
-//                   <div>
-//                     {/* donorSchema → userName */}
-//                     <p className="font-semibold text-sm text-gray-800">{d.userName}</p>
-//                     {/* donorSchema → bloodGroup, phoneNumber */}
-//                     <p className="text-xs text-gray-400">{d.bloodGroup} · {d.phoneNumber}</p>
-//                   </div>
-//                 </div>
-//                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(getPct(d))}`}>
-//                   {getPct(d)}% likely
-//                 </span>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-//       )}
-
-//       {/* ── All Donation Responses ── */}
-//       <div>
-//         <h3 className="font-semibold text-gray-800 mb-3">
-//           All Form Submissions
-//           <span className="ml-2 text-xs text-gray-400 font-normal">
-//             {responsesForRequest.length} donors
-//           </span>
-//         </h3>
-
-//         {responsesForRequest.length === 0 ? (
-//           <p className="text-sm text-gray-400">No donors have responded yet.</p>
-//         ) : (
-//           <div className="space-y-2">
-//             {responsesForRequest.map(dr => {
-//               // Find matching donor doc for ML probability display
-//               const donorDoc = respondedDonors.find(
-//                 d => d._id?.toString() === (dr.donorId?._id || dr.donorId)?.toString()
-//               );
-//               const pct = donorDoc ? getPct(donorDoc) : null;
-
-//               return (
-//                 <div key={dr._id} className="border border-gray-100 rounded-lg px-4 py-3 space-y-2">
-//                   <div className="flex items-center justify-between">
-//                     <div className="flex items-center gap-3">
-//                       <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
-//                         {/* donationResponseSchema → donorName */}
-//                         {(dr.donorName || '?').charAt(0).toUpperCase()}
-//                       </div>
-//                       <div>
-//                         {/* donationResponseSchema → donorName */}
-//                         <p className="font-semibold text-sm text-gray-800">{dr.donorName}</p>
-//                         <p className="text-xs text-gray-400">
-//                           {/* donationResponseSchema → donorBloodGroup, donorPhone, donorCity */}
-//                           {dr.donorBloodGroup} · {dr.donorPhone} · {dr.donorCity}
-//                         </p>
-//                       </div>
-//                     </div>
-
-//                     <div className="flex flex-col items-end gap-1">
-//                       {/* donationResponseSchema → status enum: "Pending"|"Accepted"|"Rejected" */}
-//                       <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-//                         dr.status === 'Accepted' ? 'bg-green-100  text-green-700'  :
-//                         dr.status === 'Rejected' ? 'bg-red-100    text-red-600'    :
-//                                                    'bg-yellow-100 text-yellow-700'
-//                       }`}>
-//                         {dr.status}
-//                       </span>
-//                       {/* Show ML probability if donor doc found */}
-//                       {pct !== null && (
-//                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(pct)}`}>
-//                           {pct}% likely
-//                         </span>
-//                       )}
-//                     </div>
-//                   </div>
-
-//                   {/* donationResponseSchema → message */}
-//                   {dr.message && (
-//                     <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 italic">
-//                       "{dr.message}"
-//                     </p>
-//                   )}
-//                 </div>
-//               );
-//             })}
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
 function DetailView({ request, donationResponses, donors, onBack }) {
-
-  // ── NEW: state for ML scored donors ──
   const [scoredDonors, setScoredDonors] = useState([]);
-  const [mlLoading,    setMlLoading]    = useState(true);
-  const [mlError,      setMlError]      = useState(null);
+  const [mlLoading, setMlLoading] = useState(true);
+  const [mlError, setMlError] = useState(null);
 
   // Filter responses and donors for this specific request
-  
-  // Step 1: Get responses only for this request
-const responsesForRequest = donationResponses.filter(
-  dr => dr.emergencyRequestId?.toString() === request._id?.toString()
-);
+  const responsesForRequest = donationResponses.filter(
+    dr => dr.emergencyRequestId?.toString() === request._id?.toString()
+  );
 
   const respondedDonorIds = new Set(
     responsesForRequest
       .map(dr => (dr.donorId?._id || dr.donorId)?.toString())
       .filter(Boolean)
   );
-
+console.log("donors:", donors);
+console.log("responsesForRequest:", responsesForRequest);
+console.log("respondedDonorIds:", [...respondedDonorIds]);
   const respondedDonors = donors.filter(d => respondedDonorIds.has(d._id?.toString()));
 
   // ── NEW: call ML server when this view opens ──
-  useEffect(() => {
-    if (respondedDonors.length === 0) {
-      setMlLoading(false);
-      setScoredDonors([]);
-      return;
-    }
+useEffect(() => {
+  console.log("🔥 useEffect triggered");
 
-    const scoreWithML = async () => {
-      try {
-        setMlLoading(true);
-        setMlError(null);
+  if (!request?.respondedBy || request.respondedBy.length === 0) {
+    console.log("❌ No responded donors");
+    setMlLoading(false);
+    setScoredDonors([]);
+    return;
+  }
 
-        const { data } = await axios.post(
-          'http://localhost:8000/score-emergency-donors',  // Express route
-          {
-            hospital_city:      request.hospitalCity || '',
-            blood_group_needed: request.bloodType    || '',
-            donors: respondedDonors.map(d => ({
-              email:      d.email      || '',
-              username:   d.userName   || '',
-              bloodGroup: d.bloodGroup || '',
-            })),
-          },
-          { withCredentials: true }
-        );
+  const scoreWithML = async () => {
+    try {
+      setMlLoading(true);
+      setMlError(null);
 
-        // Build email → ML score map
-        const scoreByEmail = {};
-        data.ranked_donors.forEach(r => { scoreByEmail[r.email] = r; });
+      const emails = request.respondedBy
+        .map(d => d.donorEmail)
+        .filter(Boolean);
 
-        // Attach ML score to each donor doc
-        const merged = respondedDonors.map(d => ({
-          ...d,
-          mlScore:    scoreByEmail[d.email] || null,
-          foundInCsv: scoreByEmail[d.email]?.found_in_csv ?? false,
-        }));
+      console.log("📤 Emails being sent:", emails);
 
-        // Sort highest probability first
-        merged.sort((a, b) =>
-          (b.mlScore?.probability ?? 0) - (a.mlScore?.probability ?? 0)
-        );
-
-        setScoredDonors(merged);
-
-      } catch (err) {
-        console.error('ML scoring failed:', err);
-        setMlError('Could not rank donors — showing unranked list');
-        setScoredDonors(respondedDonors); // fallback: unranked
-      } finally {
+      if (!emails.length) {
+        console.log("❌ No valid emails");
         setMlLoading(false);
+        return;
       }
-    };
 
-    scoreWithML();
-  }, [request._id]); // re-runs if user opens a different request
+      console.log("🚀 Calling ML API...");
 
-  // ── UPDATED helpers — now read from mlScore ──
+      const { data } = await axios.post(
+        'http://127.0.0.1:5001/predict-batch',
+        {
+          hospital_city: request.hospitalCity || '',
+          blood_group_needed: request.bloodType || '',
+          emails: emails
+        },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      console.log("✅ ML Response:", data);
+
+      const scoreByEmail = {};
+      data.ranked_donors.forEach(r => {
+        scoreByEmail[r.email] = r;
+      });
+
+      // Merge with respondedBy
+      const merged = request.respondedBy.map(d => ({
+        ...d,
+        mlScore: scoreByEmail[d.donorEmail] || null
+      }));
+
+      setScoredDonors(merged);
+
+    } catch (err) {
+      console.error("❌ ML Error:", err);
+      setMlError("ML failed");
+    } finally {
+      setMlLoading(false);
+    }
+  };
+
+  scoreWithML();
+
+}, [request.respondedBy]);
+
+
   const getPct = (d) => Math.round((d.mlScore?.probability ?? 0) * 100);
 
   const getBadgeClass = (pct) => {
@@ -918,10 +708,20 @@ const responsesForRequest = donationResponses.filter(
     if (pct >= 45) return 'bg-yellow-100 text-yellow-700';
     return 'bg-red-100 text-red-600';
   };
-  console.log('Request:', request);
-console.log('responsesForRequest:', responsesForRequest);
-console.log('donors:', donors);
-console.log('respondedDonors:', respondedDonors);
+
+  // ── Merge ML score and phone number with respondedBy ──
+  const respondedWithScores = request.respondedBy?.map(dr => {
+    const scored = scoredDonors.find(sd => sd.email === dr.donorEmail) || {};
+    return {
+      ...dr,
+      mlScore: scored.mlScore || null,
+      priority: scored.mlScore?.priority,
+      phoneNumber: scored.phoneNumber || '',
+    };
+  }) || [];
+  const topDonors = [...scoredDonors].sort(
+  (a, b) => (b.mlScore?.probability ?? 0) - (a.mlScore?.probability ?? 0)
+);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-5">
@@ -933,7 +733,7 @@ console.log('respondedDonors:', respondedDonors);
         ← Back
       </button>
 
-      {/* ── Request Details — completely unchanged ── */}
+      {/* ── Request Details ── */}
       <div className="bg-red-50 border border-red-100 rounded-xl p-4 space-y-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center bg-red-100 rounded-full h-12 w-12 shrink-0">
@@ -1001,11 +801,14 @@ console.log('respondedDonors:', respondedDonors);
         </button>
       </div>
 
-      {/* ── NEW: ML loading / error indicator ── */}
+      <div className='font-bold'>
+        Ranking donors by AI probability…
+      </div>
+
       {mlLoading && (
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <RefreshCw size={14} className="animate-spin" />
-          Ranking donors by AI probability…
+          <span>Loading ML scores...</span>
         </div>
       )}
       {mlError && (
@@ -1014,15 +817,15 @@ console.log('respondedDonors:', respondedDonors);
         </p>
       )}
 
-      {/* ── Top 3 Donors — now uses scoredDonors instead of sorted ── */}
       {!mlLoading && scoredDonors.length > 0 && (
         <div>
           <h3 className="font-semibold text-gray-800 mb-3">
             Top Likely Donors
             <span className="ml-2 text-xs text-gray-400 font-normal">ranked by AI probability</span>
           </h3>
+          
           <div className="space-y-2">
-            {scoredDonors.slice(0, 3).map((d, i) => (
+            {topDonors.slice(0, 3).map((d, i) => (
               <div
                 key={d._id}
                 className="flex items-center justify-between bg-green-50 border border-green-100 rounded-lg px-4 py-3"
@@ -1030,17 +833,21 @@ console.log('respondedDonors:', respondedDonors);
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold text-green-700">#{i + 1}</span>
                   <div>
-                    <p className="font-semibold text-sm text-gray-800">{d.userName}</p>
-                    <p className="text-xs text-gray-400">{d.bloodGroup} · {d.phoneNumber}</p>
+                    <p className='font-medium'>{d.donorName || d.username || d.email}</p>
+                    <p className="text-xs text-gray-400">
+  {d.bloodGroup} · {d.donorEmail || d.email}
+</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(getPct(d))}`}>
                     {getPct(d)}% likely
                   </span>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(getPct(d))}`}>
-                    {d.mlScore?.priority}
-                  </span>
+                  {d.mlScore?.priority && (
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(getPct(d))}`}>
+                      {d.mlScore.priority}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -1048,78 +855,59 @@ console.log('respondedDonors:', respondedDonors);
         </div>
       )}
 
-      {/* ── All Donation Responses — now uses scoredDonors to find ML score ── */}
+      {/* ── All Donors Who Responded ── */}
       <div>
         <h3 className="font-semibold text-gray-800 mb-3">
-          All Form Submissions
+          All Donors Who Responded
           <span className="ml-2 text-xs text-gray-400 font-normal">
-            {responsesForRequest.length} donors
+            {request.respondedBy?.length || 0} donor{request.respondedBy?.length === 1 ? '' : 's'}
           </span>
         </h3>
 
-        {responsesForRequest.length === 0 ? (
+        {(!request.respondedBy || request.respondedBy.length === 0) ? (
           <p className="text-sm text-gray-400">No donors have responded yet.</p>
         ) : (
           <div className="space-y-2">
-            {responsesForRequest.map(dr => {
-
-              // ── CHANGED: find from scoredDonors (has mlScore attached) ──
-              const donorDoc = scoredDonors.find(
-                d => d._id?.toString() === (dr.donorId?._id || dr.donorId)?.toString()
-              );
-              const pct = donorDoc ? getPct(donorDoc) : null;
-
-              return (
-                <div key={dr._id} className="border border-gray-100 rounded-lg px-4 py-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
-                        {(dr.donorName || '?').charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm text-gray-800">{dr.donorName}</p>
-                        <p className="text-xs text-gray-400">
-                          {dr.donorBloodGroup} · {dr.donorPhone} · {dr.donorCity}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                        dr.status === 'Accepted' ? 'bg-green-100  text-green-700'  :
-                        dr.status === 'Rejected' ? 'bg-red-100    text-red-600'    :
-                                                   'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {dr.status}
-                      </span>
-
-                      {/* ── CHANGED: real ML probability ── */}
-                      {pct !== null && !mlLoading && (
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(pct)}`}>
-                          {pct}% likely
-                        </span>
-                      )}
-
-                      {/* ── NEW: new donor badge if not in CSV ── */}
-                      {donorDoc && !donorDoc.foundInCsv && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                          new donor
-                        </span>
-                      )}
-                    </div>
+            {respondedWithScores.map(dr => (
+              <div key={dr._id} className="border border-gray-100 rounded-lg px-4 py-3 space-y-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
+                    {(dr.donorName || '?').charAt(0).toUpperCase()}
                   </div>
-
-                  {dr.message && (
-                    <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 italic">
-                      "{dr.message}"
+                  <div>
+                    <p className="font-semibold text-sm text-gray-800">{dr.donorName}</p>
+                    <p className="text-xs text-gray-800">
+                      {dr.bloodGroup} · {dr.donorEmail} · {dr.phoneNumber}
                     </p>
+                    {dr.message && (
+                      <p className="text-xs text-gray-500 italic">"{dr.message}"</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-2 text-xs">
+                  {dr.unitsDonated && (
+                    <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                      {dr.unitsDonated} unit{dr.unitsDonated > 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {dr.mlScore && (
+                    <span className={`px-2 py-1 rounded-full ${getBadgeClass(Math.round(dr.mlScore.probability * 100))}`}>
+                      {Math.round(dr.mlScore.probability * 100)}% likely
+                    </span>
+                  )}
+                  {dr.priority && (
+                    <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-bold">
+                      Priority: {dr.priority}
+                    </span>
                   )}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
+
     </div>
   );
 }
