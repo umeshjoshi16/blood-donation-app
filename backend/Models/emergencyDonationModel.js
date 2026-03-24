@@ -17,10 +17,10 @@ const donationResponseSchema = new mongoose.Schema({
   donorPhone: { type: String, required: true },
   donorCity: { type: String, required: true },
 
-  // Filled by donor
+  
   message: { type: String, default: "" },
 
-  // Hospital info (copied from emergency request for easy lookup)
+  
   hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
   hospitalName: { type: String },
 

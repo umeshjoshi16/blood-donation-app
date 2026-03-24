@@ -1,8 +1,8 @@
 import {Camp } from '../Models/Camp.js';
 
+
 export const scheduleCamp = async (req, res) => {
   try {
-
     const {
       campTitle,
       campDescription,
@@ -18,19 +18,18 @@ export const scheduleCamp = async (req, res) => {
       coordinatorContact
     } = req.body;
 
-    console.log("USER:", req.user);
+    console.log("Logged in hospital user:", req.user);
 
+    // Validate input
     if (
       !campTitle || !campDescription || !province || !district ||
       !city || !streetAddress || !date || !startTime ||
       !endTime || !expectedDonors || !coordinatorName || !coordinatorContact
     ) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    
+    // Create camp
     const camp = await Camp.create({
       campTitle,
       campDescription,
@@ -45,12 +44,11 @@ export const scheduleCamp = async (req, res) => {
       coordinatorName,
       coordinatorContact,
 
-     
       hospitalName: req.user.hospitalName,
       hospitalProvince: req.user.province,
       hospitalDistrict: req.user.district,
       hospitalCity: req.user.city,
-      hospital: req.user._id,
+      hospitalId: req.user._id,   // <-- FIXED
     });
 
     res.status(200).json({
@@ -59,7 +57,8 @@ export const scheduleCamp = async (req, res) => {
     });
 
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("ERROR IN SCHEDULE CAMP:", error);
+    return res.status(500).json({ message: error.message, stack: error.stack });
   }
 };
 

@@ -1,5 +1,6 @@
 import EmergencyRequest from "../Models/emergencyModel.js";
 import DonationResponse from "../Models/emergencyDonationModel.js"
+import mongoose from "mongoose";
 
 
 export const emergencyRequest=async(req,res)=>{
@@ -39,6 +40,58 @@ export const emergencyRequest=async(req,res)=>{
 
   }
 }
+
+export const getDonationResponsesWithDetails = async (req, res) => {
+  try {
+    // 2. Convert string ID from req.user into a MongoDB ObjectId
+    const hospitalObjectId = new mongoose.Types.ObjectId(req.user._id);
+
+    const responses = await DonationResponse.aggregate([
+      {
+        // 3. Move $match to the TOP for performance (Filter before Joining)
+        $match: { hospitalId: hospitalObjectId } 
+      },
+      {
+        $lookup: {
+          from: "emergencyrequests", // Double-check this is the lowercase plural name in your DB
+          localField: "emergencyRequestId",
+          foreignField: "_id",
+          as: "requestDetails"
+        }
+      },
+      {
+        $unwind: "$requestDetails"
+      },
+      {
+        $project: {
+          _id: 1,
+          donorName: 1,
+          donorBloodGroup: 1,
+          donorPhone: 1,
+          message: 1,
+          status: 1,
+          createdAt: 1,
+          // Extracting fields from the joined requestDetails
+          patientName: "$requestDetails.patientName",
+          requiredBloodType: "$requestDetails.bloodType",
+          hospitalName: "$requestDetails.hospitalName"
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: responses.length,
+      data: responses
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 // emergencyController.js
 export const fulfillEmergencyRequest = async (req, res) => {
   try {

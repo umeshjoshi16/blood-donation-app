@@ -10,7 +10,7 @@ dotenv.config();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin:true,
+  origin:'http://localhost:5005',
   credentials:true              
 }));
 import CONNECT_DB from './Models/db.js';

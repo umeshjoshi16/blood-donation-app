@@ -217,7 +217,7 @@ export default function RegisterCamp({ campId, donorProfile, onClose }) {
 
   const disqualified = form.recentFever || form.recentTattoo || form.alcoholLast24h;
 
-  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 " onClick={onClose} />
@@ -306,7 +306,7 @@ export default function RegisterCamp({ campId, donorProfile, onClose }) {
             </div>
           )}
 
-          {/* ══ STEP 1 — Personal Info ══ */}
+        
           {!submitted && step === 1 && (
             <div className="px-6 py-5 space-y-5">
 
