@@ -518,6 +518,7 @@ const pendingRequests = emergencyRequests.filter(
             donationResponses={donationResponses}
             donors={donors}
             onBack={() => setSelectedPending(null)}
+             hospital={hospital}  
           />
         )}
       </div>
@@ -611,7 +612,7 @@ const pendingRequests = emergencyRequests.filter(
 
 
 
-function DetailView({ request, donationResponses, donors, onBack }) {
+function DetailView({ request, donationResponses, donors, onBack,hospital }) {
   const [scoredDonors, setScoredDonors] = useState([]);
   const [mlLoading, setMlLoading] = useState(true);
   const [mlError, setMlError] = useState(null);
@@ -837,7 +838,29 @@ useEffect(() => {
                     <p className="text-xs text-gray-400">
   {d.bloodGroup} · {d.donorEmail || d.email}
 </p>
-                  </div>
+<button
+  className="border rounded-xl border-green-500 bg-green-200 font-medium text-sm p-1 hover:bg-green-700 hover:cursor-pointer hover:text-white"
+  onClick={async () => {
+    try {
+      await axios.post(
+        `http://localhost:8000/sendEmail-emergency/${request._id}/fulfill`,
+        {
+          email: d.donorEmail || d.email,
+          hospitalName: hospital?.hospitalName || 'Unknown Hospital',
+          hospitalCity: hospital?.city || 'Unknown City',
+          hospitalContact: hospital?.contactPersonNumber || 'N/A',
+        },
+        { withCredentials: true }
+      );
+      toast.success("Email sent successfully ✅");
+    } catch (err) {
+      console.error("Send Email Error:", err);
+      toast.error("Failed to send email");
+    }
+  }}
+>
+  Send Email
+</button>       </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${getBadgeClass(getPct(d))}`}>

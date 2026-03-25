@@ -1,5 +1,7 @@
 import EmergencyRequest from "../Models/emergencyModel.js";
 import DonationResponse from "../Models/emergencyDonationModel.js"
+
+
 import mongoose from "mongoose";
 
 
@@ -120,7 +122,7 @@ export const getEmergencyRequest = async (req, res) => {
     const query = { status: "Pending" }; // ← only show pending to donors
 
     if (city) {
-      // ✅ case-insensitive match — "kathmandu" matches "Kathmandu"
+      // case-insensitive match — "kathmandu" matches "Kathmandu"
       query.hospitalCity = { $regex: new RegExp(`^${city}$`, 'i') };
     }
 

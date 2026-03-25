@@ -2,8 +2,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Donor, Hospital,Organization } from'../Models/User.js';
 import generateToken from "../Utils/generateToken.js";
-                                                            
-
+import sendEmail from '../Utils/sendRegisterEmail.js';
+import getWelcomeEmail from '../Utils/getWelcomeEmail.js';                                                    
+ 
 const registerUser=async(req ,res)=>{
   try{
     const {role}=req.body;
@@ -49,6 +50,8 @@ const registerUser=async(req ,res)=>{
     else {
   return res.status(400).json({ message: "Invalid role" });
 }
+const htmlContent = getWelcomeEmail(user.userName || user.hospitalName || user.organizationName);
+      await sendEmail(user.email, 'Welcome to BloodCare!', htmlContent);
 res.status(201).json({message:`${role} registered sucessfully`,user});
 
 

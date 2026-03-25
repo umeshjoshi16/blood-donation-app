@@ -50,6 +50,7 @@ import { markAttendance } from "../Controllers/markAttendance.js";
 import { uploadCertificate, getLastCamp,getDonationHistory } from "../Controllers/certificateController.js"; 
 import { fulfillEmergencyRequest, emergencyRequest,getEmergencyRequest,submitDonationResponse,submitEmergencyDonationResponse} from '../Controllers/emergencyCampController.js';
 import { getActiveDonors } from "../Controllers/getEligibleDonor.js";
+import { sendEmergencyMail } from '../Controllers/emergencyMailController.js';
 import {
   getCamps,
   getCampRegistrations,
@@ -111,6 +112,7 @@ router.put(
   authMiddleware,
   fulfillEmergencyRequest
 );
+router.post("/sendEmail-emergency/:id/fulfill", sendEmergencyMail);
 
 
 router.post('/score-emergency-donors', async (req, res) => {
