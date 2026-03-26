@@ -217,7 +217,7 @@ export default function Certificate({ donor, camp }) {
                       {certificateData.medicalOfficer}
                     </span>
                   </div>
-                  <p style={{ fontSize: "14px", fontWeight: "bold", color: "#000000", margin: "4px 0 0 0" }}>Authorized Signature</p>
+                  <p style={{ fontSize: "14px", fontWeight: "bold", color: "#000000", margin: "4px 0 0 0" }}>Authorized Person</p>
                 </div>
               </div>
             </div>
