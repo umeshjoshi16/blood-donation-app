@@ -122,10 +122,19 @@ print("\n" + "=" * 60)
 print("FEATURE CORRELATIONS WITH TARGET")
 print("=" * 60)
 corr = df[numeric_cols + ['is_frequent_donor']].corr()['is_frequent_donor'].drop('is_frequent_donor')
+
 for feat, val in corr.sort_values(ascending=False).items():
-    bar  = '█' * int(abs(val) * 30)
+    if pd.isna(val):
+        print(f"  {feat:<30} NaN  (zero variance — skipped)")
+        continue
+    bar  =  int(abs(val) * 30)
     sign = '+' if val > 0 else '-'
     print(f"  {feat:<30} {sign}{abs(val):.4f}  {bar}")
+
+# for feat, val in corr.sort_values(ascending=False).items():
+#     bar  = '█' * int(abs(val) * 30)
+#     sign = '+' if val > 0 else '-'
+#     print(f"  {feat:<30} {sign}{abs(val):.4f}  {bar}")
 
 # =============================================================================
 # STEP 6 — SELECT FEATURES AND TARGET
@@ -308,7 +317,7 @@ print("  Place all 3 files in the same folder as app.py")
 # STEP 14 — VISUALIZATIONS (2×2 essential plots)
 # =============================================================================
 
-plt.style.use('seaborn-v0_8-whitegrid')
+plt.style.use('seaborn-whitegrid')      
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 fig.suptitle(
     f"Blood Donor — Frequent Donor Prediction (Logistic Regression)\n"

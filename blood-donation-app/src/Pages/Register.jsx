@@ -168,7 +168,8 @@ const onSubmit = async (data) => {
 
   } catch (err) {
     console.error(err.response?.data?.message || err.message);
-    alert(err.response?.data?.message || "Something went wrong");
+    toast.error('Error Registering User');
+    
   }
 };
 
